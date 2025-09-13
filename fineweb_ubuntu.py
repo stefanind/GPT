@@ -1,33 +1,36 @@
 """
-FineWeb-Edu dataset (for pretraining)
+FineWeb-Edu dataset (for srs pretraining)
 https://huggingface.co/datasets/HuggingFaceFW/fineweb-edu
 Downloads and tokenizes the data and saves data shards to disk.
-Will save shards to the local directory "edu_fineweb10B".
+
+Before running in Lambda 22.04 stack, need dependencies
+    pip install datasets tqdm transformers tiktoken
 """
 
 import os
 import multiprocessing as mp
 import numpy as np
 import tiktoken
-from datasets import load_dataset
+from datasets import load_dataset 
 from tqdm import tqdm 
 
-local_dir = r"D:\edu_fineweb10B"
-remote_name = "sample-10BT"
-os.makedirs(local_dir, exist_ok=True)
 
-# want shards to split the dataset so it isn't hard to work with in one huge file
+local_dir = "edu_fineweb10B"
+remote_name = "sample-10BT"
 shard_size = int(1e8) # 100M tokens per shard, total of 100 shards
 
+# create the cache the local directory if it doesn't exist yet
+DATA_CACHE_DIR = os.path.join(os.path.dirname(__file__), local_dir)
+os.makedirs(DATA_CACHE_DIR, exist_ok=True)
+
 # download the dataset
-fw = load_dataset("HuggingFaceFW/fineweb-edu", name=remote_name, split="train", cache_dir=r"D:\hf_cache")
+fw = load_dataset("HuggingFaceFW/fineweb-edu", name=remote_name, split="train")
 
 # init the tokenizer
 enc = tiktoken.get_encoding("gpt2")
 eot = enc._special_tokens['<|endoftext|>'] # end of text token
 def tokenize(doc):
     # tokenizes a single document and returns a numpy array of uint16 tokens
-    # uint16 can be used because there are only 50257 tokens total for the GPT 2 tokenizer
     tokens = [eot] # the special <|endoftext|> token delimits all documents
     tokens.extend(enc.encode_ordinary(doc["text"]))
     tokens_np = np.array(tokens)
@@ -60,7 +63,7 @@ with mp.Pool(nprocs) as pool:
         else:
             # write the current shard and start a new one
             split = "val" if shard_index == 0 else "train"
-            filename = os.path.join(local_dir, f"edufineweb_{split}_{shard_index:06d}")
+            filename = os.path.join(DATA_CACHE_DIR, f"edufineweb_{split}_{shard_index:06d}")
             # split the document into whatever fits in this shard; the remainder goes to next one
             remainder = shard_size - token_count
             progress_bar.update(remainder)
@@ -75,5 +78,5 @@ with mp.Pool(nprocs) as pool:
     # write any remaining tokens as the last shard
     if token_count != 0:
         split = "val" if shard_index == 0 else "train"
-        filename = os.path.join(local_dir, f"edufineweb_{split}_{shard_index:06d}")
+        filename = os.path.join(DATA_CACHE_DIR, f"edufineweb_{split}_{shard_index:06d}")
         write_datafile(filename, all_tokens_np[:token_count])

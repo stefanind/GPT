@@ -108,12 +108,14 @@ def render_example(example):
 
     # at this point we have tok_rows containing the tokens for ctx + end
     # and mask_rows containing the zeros associated with the len(ctx) and the ones associated with the len(end)
-    # NOTE: in this next step, we are adding zeros to the end to match with the longest ending
-    # goal: we want to ensure that each batch has the same length 
-    # e.g., if the length of end[0] is 3 but end[1] is 4, then this batch would be nonconsistent in the first dimension (dim[1])
-    # we solve this by padding end[0] with one zero so that it matches the largest length (which is end[1])
+
+    # NOTE: in this next step below, we are adding zeros to the end to match with the longest ending
+    # goal: we want to ensure that each hellaswag example row has the same length 
+    # e.g., if the length of ctx+end[0] is 7 but ctx+end[1] is 8, then this batch would be nonconsistent in the first dimension (dim[1])
+    # we solve this by padding ctx+end[0] with one zero so that it matches the largest length (which is ctx+end[1])
 
     # find the maximum length over all rows from each example
+    # and create a tensor with all the example rows for each question, ensuring dim[1] has the max length row
     max_len = max(len(row) for row in tok_rows)
     tokens = torch.zeros((4, max_len), dtype=torch.long)
     mask = torch.zeros((4, max_len), dtype=torch.long)
@@ -187,6 +189,7 @@ def evaluate(model_type, device):
             for i, end in enumerate(example["endings"]):
                 print(f"{i} (loss: {avg_loss[i].item():.4f}) {end}")
             print(f"predicted: {pred_norm}, actual: {label}")
+            
 
 if __name__ == "__main__":
     import argparse

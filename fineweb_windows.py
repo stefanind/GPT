@@ -1,12 +1,17 @@
+"""
+This is meant for Windows installation of the data. Does not work with Linux.
+"""
+
+
 import os
 import multiprocessing as mp
 import numpy as np
 import tiktoken
-from datasets import load_dataset, DownloadConfig   # NEW
+from datasets import load_dataset, DownloadConfig
 from tqdm import tqdm
-import signal                                        # NEW (for clean Ctrl+C on Windows)
+import signal                                        
 
-# ------------------------------------------
+
 local_dir = "edu_fineweb10B"
 remote_name = "sample-10BT"
 shard_size = int(1e8) # 100M tokens per shard, total of 100 shards
@@ -14,14 +19,13 @@ shard_size = int(1e8) # 100M tokens per shard, total of 100 shards
 DATA_CACHE_DIR = os.path.join(os.path.dirname(__file__), local_dir)
 os.makedirs(DATA_CACHE_DIR, exist_ok=True)
 
-# ---------- NEW: safer EOT token ----------
 enc = tiktoken.get_encoding("gpt2")
-eot = enc._special_tokens['<|endoftext|>']  # avoid using _special_tokens
+eot = enc._special_tokens['<|endoftext|>'] 
 
 def tokenize(doc):
     tokens = [eot]
     tokens.extend(enc.encode_ordinary(doc["text"]))
-    tokens_np = np.array(tokens, dtype=np.uint32) # widen temp
+    tokens_np = np.array(tokens, dtype=np.uint32) # widen temporarily 
     if (tokens_np >= 2**16).any():
         raise ValueError("token id >= 65536; uint16 overflow")
     return tokens_np.astype(np.uint16)
@@ -29,23 +33,20 @@ def tokenize(doc):
 def write_datafile(filename, tokens_np):
     np.save(filename, tokens_np)
 
-# ---------- NEW: make pool interrupt-friendly ----------
+# make pool interrupt-friendly 
 def _init_worker():
     try:
         signal.signal(signal.SIGINT, signal.SIG_IGN)
     except Exception:
         pass
 
-def main():  # NEW: Windows needs a main() when using multiprocessing
-    # ---------- NEW: fewer HEAD requests + gentle retries ----------
+def main():  # windows needs a main() when using multiprocessing
+    # fewer HEAD requests + gentle retries
     FIRST_RUN = True  # set to False after the first successful download
     dl_cfg = DownloadConfig(
         max_retries=2,
-        # resume_download=True,   # (default True)
-        # local_files_only=not FIRST_RUN,  # alternative: flip to True after first run
     )
 
-    # ---------- CHANGED: add verification_mode + download_config + explicit cache_dir ----------
     fw = load_dataset(
         "HuggingFaceFW/fineweb-edu",
         name=remote_name,
@@ -61,7 +62,7 @@ def main():  # NEW: Windows needs a main() when using multiprocessing
         token_count = 0
         progress_bar = None
 
-        # ---------- CHANGED: smaller chunksize → more responsive, fewer long hangs ----------
+        # smaller chunksize is more responsive and there are fewer long hangs
         for tokens in pool.imap(tokenize, fw, chunksize=4):
 
             if token_count + len(tokens) < shard_size:
@@ -89,9 +90,10 @@ def main():  # NEW: Windows needs a main() when using multiprocessing
             filename = os.path.join(DATA_CACHE_DIR, f"edufineweb_{split}_{shard_index:06d}")
             write_datafile(filename, all_tokens_np[:token_count])
 
-if __name__ == "__main__":  # NEW: Windows-safe guard
-    mp.freeze_support()
+if __name__ == "__main__": 
+    mp.freeze_support() 
     try:
         main()
     except KeyboardInterrupt:
         print("\n[Interrupted]")
+        
