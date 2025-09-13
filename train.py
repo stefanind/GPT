@@ -16,7 +16,8 @@ from dataloader import DataLoaderLite
 from torch.nn.parallel import DistributedDataParallel as DDP
 import torch.distributed as dist
 
-
+# -------------------------------------------------------------------------------------------
+# train.py
 def main():
 
     # init DDP/device 
@@ -37,10 +38,10 @@ def main():
     warmup_steps     = 715          # GPT-3 paper says 375M tokens are for warmup; 375e6 / 2**19 = 715
     max_lr           = 6e-4         # peak lr
     min_lr           = max_lr * 0.1 # final lr (10% of max)
-    weight_decay     = 0.1          # 
-    eval_every       = 500          # 
-    save_every       = 5000         #
-    use_compile      = False        #
+    weight_decay     = 0.1          # weight decay the parameters for regularization
+    eval_every       = 500          # init evaluation every 500 steps of the main loop
+    save_every       = 5000         # init model checkpoint every 5000 steps of the main loop
+    use_compile      = False        # torch.compile set to False because of issues while using it in eval mode
 
     assert total_batch_size % (B * T * ddp_world_size) == 0, "make sure that the batch size is divisible by B * T * ddp_world_size"
 
