@@ -40,13 +40,4 @@ def setup_ddp():
     # pytorch is strict about device_type vs device
     device_type = "cuda" if device.startswith("cuda") else "cpu"
 
-    return {
-        "ddp": ddp,
-        "rank": ddp_rank,
-        "local_rank": ddp_local_rank,
-        "world_size": ddp_world_size,
-        "device": device,
-        "device_type": device_type,
-        "master_process": master_process,
-        "destroy": destroy_process_group if ddp else (lambda: None)
-    }
+    return ddp, ddp_rank, ddp_local_rank, ddp_world_size, device, device_type, master_process

@@ -233,7 +233,7 @@ class GPT(nn.Module):
     # regularize weights
     # goal: pull down weights so the network finds a solution that doesn't involve large weights
     # improves generalization; prevents overfitting
-    def configure_optimizers(self, weight_decay, learning_rate, device, master_process=True):
+    def configure_optimizers(self, weight_decay, learning_rate, device, master_process):
 
         # 'param_dict' returns a dict containing only those parameters that has a gradient
         # goal: want only the trainable parameters
