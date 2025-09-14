@@ -21,6 +21,7 @@ class GPTConfig:
 # ------------------------------------------------------------
 # Model
 
+# TODO: implement RoPE
 
 class CausalSelfAttention(nn.Module):
 
