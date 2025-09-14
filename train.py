@@ -279,7 +279,7 @@ def main():
         tokens_per_sec   = tokens_processed / dt
 
         # only print out and log the master process metrics for tracking
-        # goal: don't want multiple printouts for each process
+        # goal: if ddp active, don't want multiple printouts for each process
         if master_process:
             print(f"step {step:4d}, | loss: {loss_accum.item():.6f}, | lr: {lr:.4e} | norm: {norm:.4f} | dt {dt:.2f}s | tok/sec: {tokens_per_sec:.2f}")
             with open(log_file, "a") as f:
