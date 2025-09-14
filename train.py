@@ -58,8 +58,8 @@ def main():
         print(f"gradient accumulation steps: {grad_accum_steps}")
 
     # set the data/val loader
-    train_loader = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, split='train')
-    val_loader   = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, split='val')
+    train_loader = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, master_process=master_process, split='train')
+    val_loader   = DataLoaderLite(B=B, T=T, process_rank=ddp_rank, num_processes=ddp_world_size, master_process=master_process, split='val')
 
     # using TF32 (10-bit mantissa instead of 23-bit) for speed, as long as I have some reasonable accuracy
     # useful for training/inference
@@ -86,7 +86,7 @@ def main():
     raw_model = model.module if ddp else model
 
     # optimizer
-    optimizer = raw_model.configure_optimizers(weight_decay=weight_decay, learning_rate=max_lr, device_type=device_type)
+    optimizer = raw_model.configure_optimizers(weight_decay=weight_decay, learning_rate=max_lr, device=device, master_process=master_process)
 
     # --- logging ---
     # create the a directory that we will write checkpoints to and log to
@@ -231,7 +231,7 @@ def main():
                 model.require_backward_grad_sync = (micro_step == grad_accum_steps - 1)
 
             # ------ CHECK GPU TYPES BEFORE RUNNING!!! ------
-            with torch.autocast(dtype=torch.bfloat16): # only allowed with Ampere and newer GPUs
+            with torch.autocast(dtype=torch.bfloat16, device_type=device_type): # only allowed with Ampere and newer GPUs
                 logits, loss = model(x, y)
 
             # scale each loss by the total steps to match a normal training loop
