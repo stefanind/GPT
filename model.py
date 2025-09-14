@@ -12,11 +12,13 @@ from torch.nn import functional as F
 
 @dataclass
 class GPTConfig:
-    block_size: int = 1024
-    vocab_size: int = 50257
-    n_layer: int = 12
-    n_head: int = 12
-    n_embd: int = 768
+    block_size: int  = 1024  # max context/sequence length
+    vocab_size: int  = 50257 # number of tokens: 256 bytes tokens, 1 EoT token, and 50,000 BPE merges
+    n_layer: int     = 12    # number of layers
+    n_head: int      = 12    # number of attn heads 
+    n_embd: int      = 768   # embedding dimension
+    dropout: float   = 0.2   # percentage of neurons dropped out
+    bias: bool       = True  # add bias or not
 
 # ------------------------------------------------------------
 # Model
