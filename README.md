@@ -2,7 +2,7 @@ This is a complete adaptation of GPT-2 (with some GPT-3 hyperparameters) followe
 
 The code is mostly his (I take no rights to it), but I rewrote it by following along, added my own comments for educational purposes, and refactored it. Therefore, I understand every piece of code written and the role it plays. 
 
-Currently, I am at the process training. I will be creating an instance through Lambda labs to utilize their resources. Distributed training is set up such that one GPU or multiple can be used. 
+Currently, I just finished training. I created an instance through Lambda labs to utilize their resources. Distributed training is set up such that one GPU or multiple can be used. 
 
 Overtime, I will make my own additions to it (and will document them) to see if I can substantially beat GPT-2 benchmarks. 
 
@@ -10,7 +10,7 @@ Overtime, I will make my own additions to it (and will document them) to see if 
 
 ### Dropout and biases
 
-The first obvious additions that will improve the model is by including dropout regularization and biases in the linear 
+The first obvious additions that will likely improve the model is by including dropout regularization and biases in the linear layers. 
 
 ### Between shard shuffling
 
